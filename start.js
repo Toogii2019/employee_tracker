@@ -31,6 +31,7 @@ let managers = []
 let manager_id = 0;
 let role_id = 0;
 let employees = []
+let departments = []
 
 // ========================Get Action======================================
 
@@ -49,7 +50,8 @@ function init() {
     managers = []
     manager_id = 0;
     role_id = 0;
-    employees = []
+    employees = [];
+    departments = [];
     
     inquirer
     .prompt(questions)
@@ -215,13 +217,84 @@ function removeEmployee() {
               console.log(response.employee);
               RemoveEmployeeToDB(response.employee.split(" ")[0], response.employee.split(" ")[1]);
 
-          })
+        })
+    });
+}
+
+
+function viewAllEmployeeByDep() {
+
+    connection.query(
+        "SELECT * from department;",
+        function (err, result) {
+          if (err) throw err;
+        //   console.log(result);
+
+          for (i=0;i<result.length;i++) {
+            departments.push(`${result[i].name}`)
+          }
+
+          inquirer
+          .prompt(
+          [
+              {message: 'Choose the department',name: 'department', type: 'list', choices: departments}
+          ]
+          )
+          .then(function(response) {
+              console.log(response.department);
+              connection.query(
+                `select department.id from department where department.name = '${response.department}'`,
+                function (err, result) {
+                  if (err) throw err;
+                  console.log(result[0].id);
+                  
+                  connection.query(
+                    `SELECT A.first_name, A.last_name, role.title as Role, role.salary as Salary, department.name as Department, B.first_name as Manager FROM employee as A INNER JOIN (employee as B, role, department) ON (A.manager_id = B.id AND A.role_id = role.id AND role.department_id = department.id) where department.id = '${result[0].id}'`,
+                    function (err, result) {
+                      if (err) throw err;
+                      displayResult(result);
+                })
+            })
+        })
+    });
+}
+
+
+function viewAllEmployeeByManager() {
+
+    connection.query(
+        "select first_name, last_name from employee INNER JOIN (role) ON employee.role_id = role.id where role.title = 'manager' OR role.title = 'Sr Manager'",
+        function (err, result) {
+          if (err) throw err;
+        //   console.log(result);
+
+          for (i=0;i<result.length;i++) {
+              managers.push(`${result[i].first_name} ${result[i].last_name}`)
+          }
+          console.log(managers);
+
+          inquirer
+          .prompt(
+          [
+              {message: 'Choose the manager',name: 'manager', type: 'list', choices: managers}
+          ]
+          )
+          .then(function(response) {
+              console.log(response.manager);
+              connection.query(
+                `SELECT A.first_name, A.last_name, role.title as Role, role.salary as Salary, department.name as Department, B.first_name as Manager_Firstname, B.last_name as Manager_Lastname FROM employee as A INNER JOIN (employee as B, role, department) ON (A.manager_id = B.id AND A.role_id = role.id AND role.department_id = department.id) where B.first_name = "${response.manager.split(" ")[0]}" and B.last_name="${response.manager.split(" ")[1]}";`,
+                function (err, result) {
+                  if (err) throw err;
+                  displayResult(result);
+                  
+            })
+        })
+
         }
-    );
+    )
 
 
 }
-
 
 init();
   
