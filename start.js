@@ -92,17 +92,10 @@ function init() {
 
 
 function viewAllEmployee() {
-
-    // connection.connect(function (err) {
-    //     if (err) throw err;
-    //     console.log(`connected as id: ${connection.threadId}`);
-    // });
-
     connection.query(
         getAllQuery,
         function (err, result) {
           if (err) throw err;
-          // re-prompt the user for if they want to bid or post
           displayResult(result);
         }
       );
@@ -177,6 +170,7 @@ function addEmployee() {
 };
 
 
+
 function addNewEmployeeToDB(firstname, lastname, role_id, manager_id) {
     console.log(firstname, lastname, role_id, manager_id);
     connection.query(
@@ -188,7 +182,7 @@ function addNewEmployeeToDB(firstname, lastname, role_id, manager_id) {
     );
 }
 
-function RemoveEmployeeToDB(firstname, lastname) {
+function RemoveEmployeeFromDB(firstname, lastname) {
     connection.query(
         `DELETE FROM employee WHERE first_name = "${firstname}" AND last_name = "${lastname}";`, 
         function (err, result) {
@@ -224,7 +218,7 @@ function removeEmployee() {
           )
           .then(function(response) {
               console.log(response.employee);
-              RemoveEmployeeToDB(response.employee.split(" ")[0], response.employee.split(" ")[1]);
+              RemoveEmployeeFromDB(response.employee.split(" ")[0], response.employee.split(" ")[1]);
 
         })
     });
