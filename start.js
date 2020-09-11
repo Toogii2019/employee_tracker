@@ -3,9 +3,9 @@ const mysql = require("mysql");
 const cTable = require('console.table');
 
 
-const getAllQuery = "SELECT A.first_name, role.title as Role, role.salary as Salary, department.name as Department, B.first_name as Manager FROM employee as A INNER JOIN (employee as B, role, department) ON (A.manager_id = B.id AND A.role_id = role.id AND role.department_id = department.id)"
-
+const getAllQuery = "SELECT A.first_name, A.last_name, role.title as Role, role.salary as Salary, department.name as Department, B.first_name as Manager FROM employee as A INNER JOIN (employee as B, role, department) ON (A.manager_id = B.id AND A.role_id = role.id AND role.department_id = department.id)"
 // ========================Connection To Database========================
+
 
 const connection = mysql.createConnection({
   host: 'localhost',
@@ -23,98 +23,205 @@ const connection = mysql.createConnection({
 
 // ========================================================================
 
+// ========================Prepare Variables======================================
+
+
+let roles = [];
+let managers = []
+let manager_id = 0;
+let role_id = 0;
+let employees = []
+
 // ========================Get Action======================================
 
 const questions = [
     {message: 'What would you like to do ?',name: 'action', type: 'list', choices: ['View All Employees', 'View All Employees By Department', 'View All Employees By Manager', 'Add Employee', 'Remove Employee', 'Update Employee Manager', 'Update Employee Role']},
 ];
 
-inquirer
-.prompt(questions)
-.then(function(response) {
-    switch (response.action) {
-        case "View All Employees":
-            viewAllEmployee();
-            break;
-        case "View All Employees By Department":
-            viewAllEmployeeByDep();
-            break;
-        case "View All Employees By Manager":
-            viewAllEmployeeByManager();
-            break;
-        case "Add Employee":
-            addEmployee();
-            break;
-        case "Remove Employee":
-            removeEmployee();
-            break;
-        case "Update Employee Role":
-            updateEmployeeRole();
-            break;
-        case "Update Employee Manager":
-            updateEmployeeManager();
-            break;
-        default:
-            break;
+
+connection.connect(function (err) {
+    if (err) throw err;
+    console.log(`connected as id: ${connection.threadId}`);
+});
+
+function init() {
+    roles = [];
+    managers = []
+    manager_id = 0;
+    role_id = 0;
+    employees = []
+    
+    inquirer
+    .prompt(questions)
+    .then(function(response) {
+        switch (response.action) {
+            case "View All Employees":
+                viewAllEmployee();
+                break;
+            case "View All Employees By Department":
+                viewAllEmployeeByDep();
+                break;
+            case "View All Employees By Manager":
+                viewAllEmployeeByManager();
+                break;
+            case "Add Employee":
+                addEmployee();
+                break;
+            case "Remove Employee":
+                removeEmployee();
+                break;
+            case "Update Employee Role":
+                updateEmployeeRole();
+                break;
+            case "Update Employee Manager":
+                updateEmployeeManager();
+                break;
+            default:
+                break;
+        }
     }
-}
-);                            
-
-
-
-
-
-
+    );     
+}                      
 
 
 function viewAllEmployee() {
-    console.log("viewAllEmployee");
 
-    connection.connect(function (err) {
-        if (err) throw err;
-        console.log(`connected as id: ${connection.threadId}`);
-    });
+    // connection.connect(function (err) {
+    //     if (err) throw err;
+    //     console.log(`connected as id: ${connection.threadId}`);
+    // });
 
     connection.query(
         getAllQuery,
         function (err, result) {
           if (err) throw err;
-          console.log('Successfully got information from Database!');
           // re-prompt the user for if they want to bid or post
           displayResult(result);
         }
       );
+    }
+
+function addEmployee() {
+    connection.query(
+        "SELECT * from role",
+        function (err, result) {
+          if (err) throw err;
+        //   console.log(result);
+
+          for (i=0;i<result.length;i++) {
+              roles.push(result[i].title)
+          }
+        }
+    );
+    connection.query(
+        "select first_name, last_name from employee INNER JOIN (role) ON employee.role_id = role.id where role.title = 'manager' OR role.title = 'Sr Manager'",
+        function (err, result) {
+          if (err) throw err;
+        //   console.log(result);
+
+          for (i=0;i<result.length;i++) {
+              managers.push(`${result[i].first_name} ${result[i].last_name}`)
+          }
+        //   console.log(managers);
+        }
+    );
+          
+    inquirer
+    .prompt(
+    [
+        {message: 'First Name ?',name: 'firstname', type: 'input'},
+        {message: 'Last Name',name: 'lastname', type: 'input'},
+        {message: 'Role ?',name: 'role', type: 'list', choices: roles},
+        {message: 'Manager ?',name: 'manager', type: 'list', choices: managers}
+    ]
+    )
+    .then(function(response) {
+        // console.log(response);
+        connection.query(
+            "select id from employee where ? AND ?", 
+            [
+                {
+                  first_name: response.manager.split(" ")[0]
+                },
+                {
+                  last_name: response.manager.split(" ")[1]
+                }
+              ],
+            function (err, result) {
+              if (err) throw err;
+              manager_id = result[0].id;
+            }
+        );
+
+            
+        connection.query(
+            `select role.id from role where role.title = '${response.role}'`, 
+            function (err, result) {
+              if (err) throw err;
+              role_id = result[0].id;
+              addNewEmployeeToDB(response.firstname, response.lastname, role_id, manager_id);
+            }
+        );
+    });       
+};
+
+
+function addNewEmployeeToDB(firstname, lastname, role_id, manager_id) {
+    console.log(firstname, lastname, role_id, manager_id);
+    connection.query(
+        `INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("${firstname}", "${lastname}", ${role_id}, ${manager_id});`, 
+        function (err, result) {
+          if (err) throw err;
+          viewAllEmployee();
+        }
+    );
+}
+
+function RemoveEmployeeToDB(firstname, lastname) {
+    connection.query(
+        `DELETE FROM employee WHERE first_name = "${firstname}" AND last_name = "${lastname}";`, 
+        function (err, result) {
+          if (err) throw err;
+          viewAllEmployee();
+        }
+    );
 }
 
 function displayResult(obj) {
     console.table(obj)
-}
-
-function viewAllEmployeeByDep() {
-    console.log("viewAllEmployeeByDep");
-}
-function viewAllEmployeeByManager() {
-    console.log("viewAllEmployeeByManager");
-}
-
-function addEmployee() {
-    console.log("addEmployee");
+    init();
 }
 
 function removeEmployee() {
-    console.log("removeEmployee");
+
+    connection.query(
+        "SELECT * from employee",
+        function (err, result) {
+          if (err) throw err;
+        //   console.log(result);
+
+          for (i=0;i<result.length;i++) {
+            employees.push(`${result[i].first_name} ${result[i].last_name}`)
+          }
+          console.log(employees);
+
+          inquirer
+          .prompt(
+          [
+              {message: 'Choose the employee to remove',name: 'employee', type: 'list', choices: employees}
+          ]
+          )
+          .then(function(response) {
+              console.log(response.employee);
+              RemoveEmployeeToDB(response.employee.split(" ")[0], response.employee.split(" ")[1]);
+
+          })
+        }
+    );
+
+
 }
 
-function updateEmployeeRole() {
-    console.log("updateEmployeeRole");
-}
 
-
-function updateEmployeeManager() {
-    console.log("updateEmployeeManager");
-}
-
-
-
-
+init();
   
