@@ -3,7 +3,12 @@ const mysql = require("mysql");
 const cTable = require('console.table');
 
 
-const getAllQuery = "SELECT A.first_name, A.last_name, role.title as Role, role.salary as Salary, department.name as Department, B.first_name as Manager FROM employee as A INNER JOIN (employee as B, role, department) ON (A.manager_id = B.id AND A.role_id = role.id AND role.department_id = department.id)"
+const getAllQuery = "SELECT A.first_name," + 
+                    "A.last_name, role.title as Role," +
+                    "role.salary as Salary," + 
+                    "department.name as Department," + 
+                    "B.first_name as Manager FROM employee as A INNER JOIN (employee as B, role, department)" + 
+                    "ON (A.manager_id = B.id AND A.role_id = role.id AND role.department_id = department.id)"
 // ========================Connection To Database========================
 
 
@@ -116,7 +121,11 @@ function addEmployee() {
         }
     );
     connection.query(
-        "select first_name, last_name from employee INNER JOIN (role) ON employee.role_id = role.id where role.title = 'manager' OR role.title = 'Sr Manager'",
+        "select first_name," + 
+        "last_name from employee " + 
+        "INNER JOIN (role) " + 
+        "ON employee.role_id = role.id " + 
+        "where role.title = 'manager' OR role.title = 'Sr Manager'",
         function (err, result) {
           if (err) throw err;
         //   console.log(result);
@@ -249,7 +258,10 @@ function viewAllEmployeeByDep() {
                   console.log(result[0].id);
                   
                   connection.query(
-                    `SELECT A.first_name, A.last_name, role.title as Role, role.salary as Salary, department.name as Department, B.first_name as Manager FROM employee as A INNER JOIN (employee as B, role, department) ON (A.manager_id = B.id AND A.role_id = role.id AND role.department_id = department.id) where department.id = '${result[0].id}'`,
+                    `SELECT A.first_name, A.last_name, role.title as Role, role.salary as Salary,` + 
+                    `department.name as Department,` + 
+                    `B.first_name as Manager FROM employee as A INNER JOIN (employee as B, role, department)` + 
+                    `ON (A.manager_id = B.id AND A.role_id = role.id AND role.department_id = department.id) where department.id = '${result[0].id}'`,
                     function (err, result) {
                       if (err) throw err;
                       displayResult(result);
@@ -263,7 +275,9 @@ function viewAllEmployeeByDep() {
 function viewAllEmployeeByManager() {
 
     connection.query(
-        "select first_name, last_name from employee INNER JOIN (role) ON employee.role_id = role.id where role.title = 'manager' OR role.title = 'Sr Manager'",
+        "select first_name, last_name from employee INNER JOIN (role)" + 
+        "ON employee.role_id = role.id where role.title = 'manager'" + 
+        "OR role.title = 'Sr Manager'",
         function (err, result) {
           if (err) throw err;
         //   console.log(result);
@@ -282,7 +296,13 @@ function viewAllEmployeeByManager() {
           .then(function(response) {
               console.log(response.manager);
               connection.query(
-                `SELECT A.first_name, A.last_name, role.title as Role, role.salary as Salary, department.name as Department, B.first_name as Manager_Firstname, B.last_name as Manager_Lastname FROM employee as A INNER JOIN (employee as B, role, department) ON (A.manager_id = B.id AND A.role_id = role.id AND role.department_id = department.id) where B.first_name = "${response.manager.split(" ")[0]}" and B.last_name="${response.manager.split(" ")[1]}";`,
+                `SELECT A.first_name,` + 
+                `A.last_name, role.title as Role,` + 
+                `role.salary as Salary, department.name as Department,` + 
+                `B.first_name as Manager_Firstname,` + 
+                `B.last_name as Manager_Lastname FROM employee as A INNER JOIN (employee as B, role, department)` + 
+                `ON (A.manager_id = B.id AND A.role_id = role.id AND role.department_id = department.id)` + 
+                `where B.first_name = "${response.manager.split(" ")[0]}" and B.last_name="${response.manager.split(" ")[1]}";`,
                 function (err, result) {
                   if (err) throw err;
                   displayResult(result);
