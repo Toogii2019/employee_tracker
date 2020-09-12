@@ -126,7 +126,6 @@ function addEmployee() {
           for (i=0;i<result.length;i++) {
               managers.push(`${result[i].first_name} ${result[i].last_name}`)
           }
-        //   console.log(managers);
         }
     );
           
@@ -172,7 +171,6 @@ function addEmployee() {
 
 
 function addNewEmployeeToDB(firstname, lastname, role_id, manager_id) {
-    console.log(firstname, lastname, role_id, manager_id);
     connection.query(
         `INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("${firstname}", "${lastname}", ${role_id}, ${manager_id});`, 
         function (err, result) {
@@ -208,7 +206,6 @@ function removeEmployee() {
           for (i=0;i<result.length;i++) {
             employees.push(`${result[i].first_name} ${result[i].last_name}`)
           }
-          console.log(employees);
 
           inquirer
           .prompt(
@@ -217,7 +214,6 @@ function removeEmployee() {
           ]
           )
           .then(function(response) {
-              console.log(response.employee);
               RemoveEmployeeFromDB(response.employee.split(" ")[0], response.employee.split(" ")[1]);
 
         })
@@ -274,13 +270,10 @@ function viewAllEmployeeByManager() {
         "OR role.title = 'Sr Manager'",
         function (err, result) {
           if (err) throw err;
-        //   console.log(result);
 
           for (i=0;i<result.length;i++) {
               managers.push(`${result[i].first_name} ${result[i].last_name}`)
           }
-          console.log(managers);
-
           inquirer
           .prompt(
           [
@@ -288,7 +281,6 @@ function viewAllEmployeeByManager() {
           ]
           )
           .then(function(response) {
-              console.log(response.manager);
               connection.query(
                 `SELECT A.first_name,` + 
                 `A.last_name, role.title as Role,` + 
@@ -303,10 +295,76 @@ function viewAllEmployeeByManager() {
                   
             })
         })
-
         }
     )
+}
 
+function updateEmployeeManager() {
+    connection.query(
+        "SELECT * from employee",
+        function (err, result) {
+          if (err) throw err;
+
+          for (i=0;i<result.length;i++) {
+            employees.push(`${result[i].first_name} ${result[i].last_name}`)
+          }
+
+          inquirer
+          .prompt(
+          [
+              {message: 'Choose the employee to update ',name: 'employee', type: 'list', choices: employees}
+          ]
+          )
+          .then(function(employee_response) {
+            
+              connection.query(
+                "select first_name," + 
+                "last_name from employee " + 
+                "INNER JOIN (role) " + 
+                "ON employee.role_id = role.id " + 
+                "where role.title = 'manager' OR role.title = 'Sr Manager'",
+                function (err, result) {
+                  if (err) throw err;
+                //   console.log(result);
+        
+                  for (i=0;i<result.length;i++) {
+                      managers.push(`${result[i].first_name} ${result[i].last_name}`)
+                  }
+                  inquirer
+                  .prompt(
+                  [
+                      {message: 'New manager for the employee ',name: 'manager', type: 'list', choices: managers}
+                  ]
+                  )
+                  .then(function(manager_response) {
+                      connection.query(
+                        `select id from employee where first_name = '${manager_response.manager.split(" ")[0]}' AND last_name = '${manager_response.manager.split(" ")[1]}'`,
+                        function (err, result) {
+                          if (err) throw err;
+                          connection.query(
+                            `UPDATE employee SET manager_id = ${result[0].id} where first_name = '${employee_response.employee.split(" ")[0]}' AND last_name = '${employee_response.employee.split(" ")[1]}'`,
+                            function (err, result) {
+                              if (err) throw err;
+                              viewAllEmployee();
+                            })
+                        })
+                
+                  })
+                    
+                }
+            );
+
+
+
+
+
+
+
+        
+
+
+        })
+    });
 
 }
 
