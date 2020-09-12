@@ -348,21 +348,61 @@ function updateEmployeeManager() {
                               viewAllEmployee();
                             })
                         })
-                
-                  })
-                    
+                  })  
                 }
             );
+        })
+    });
 
+}
 
+function updateEmployeeRole() {
+    connection.query(
+        "SELECT * from employee",
+        function (err, result) {
+          if (err) throw err;
 
+          for (i=0;i<result.length;i++) {
+            employees.push(`${result[i].first_name} ${result[i].last_name}`)
+          }
 
-
-
-
+          inquirer
+          .prompt(
+          [
+              {message: 'Choose the employee to update ',name: 'employee', type: 'list', choices: employees}
+          ]
+          )
+          .then(function(employee_response) {
+              connection.query(
+                "select * from role",
+                function (err, result) {
+                  if (err) throw err;
+                //   console.log(result);
         
-
-
+                  for (i=0;i<result.length;i++) {
+                      roles.push(`${result[i].title}`)
+                  }
+                  inquirer
+                  .prompt(
+                  [
+                      {message: 'New Role ',name: 'role', type: 'list', choices: roles}
+                  ]
+                  )
+                  .then(function(role_response) {
+                      connection.query(
+                        `select id from role where title = '${role_response.role}';`,
+                        function (err, result) {
+                          if (err) throw err;
+                          connection.query(
+                            `UPDATE employee SET role_id = ${result[0].id} where first_name = '${employee_response.employee.split(" ")[0]}' AND last_name = '${employee_response.employee.split(" ")[1]}'`,
+                            function (err, result) {
+                              if (err) throw err;
+                              viewAllEmployee();
+                            })
+                        })
+                  })  
+                }
+            );
         })
     });
 
