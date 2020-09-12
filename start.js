@@ -1,6 +1,6 @@
 const inquirer = require("inquirer");
 const mysql = require("mysql");
-const cTable = require('console.table');
+// const cTable = require('console.table');
 
 
 const getAllQuery = "SELECT A.first_name," + 
