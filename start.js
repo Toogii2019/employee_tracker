@@ -9,6 +9,7 @@ const getAllQuery = "SELECT A.first_name," +
                     "department.name as Department," + 
                     "B.first_name as Manager FROM employee as A INNER JOIN (employee as B, role, department)" + 
                     "ON (A.manager_id = B.id AND A.role_id = role.id AND role.department_id = department.id)"
+
 // ========================Connection To Database========================
 
 
@@ -41,7 +42,7 @@ let departments = []
 // ========================Get Action======================================
 
 const questions = [
-    {message: 'What would you like to do ?',name: 'action', type: 'list', choices: ['View All Employees', 'View All Employees By Department', 'View All Employees By Manager', 'Add Employee', 'Remove Employee', 'Update Employee Manager', 'Update Employee Role']},
+    {message: 'What would you like to do ?',name: 'action', type: 'list', choices: ['View All Employees', 'View All Employees By Department', 'View All Employees By Manager', 'Add Employee', 'Remove Employee', 'Update Employee Manager', 'Update Employee Role', 'Exit']},
 ];
 
 
@@ -83,6 +84,8 @@ function init() {
             case "Update Employee Manager":
                 updateEmployeeManager();
                 break;
+            case "Exit":
+                process.exit();
             default:
                 break;
         }
